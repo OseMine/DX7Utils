@@ -43,12 +43,6 @@ to these lines
 
 ### Running `mididebug.py`
 Use `mididebug.py` to enhance your control setup by executing:
-   ```bash
-   python mididebug.py
-   ```
-(good for developing, because of the Debug Messages)
-
-   OR
 
   ```bash
    python mididebug.py
