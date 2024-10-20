@@ -4,13 +4,19 @@ DX7Utils is a set of utilities designed to enhance the experience of using the Y
 
 ## Features
 
-### 1.MIDI TOOL
+### 1. Config
+`config.py` is the gui based configuration for the whole project. It enables to set a path for the SysEx Cartridges and to Set Midi input/output ports with autotesting of the ports. more functionality will come in the future
+
+### 2.MIDI TOOL
 `mididebug.py`/`midi.py` enables the use of the Data Entry slider (MIDI CC 6) in combination with the 32 patch buttons (MIDI Program Change 0-31) as 32 individual MIDI CC inputs. This setup is particularly useful if you don’t have a dedicated master keyboard, allowing you to control various parameters on the DX7.
 
 To use `mididebug.py`/`midi.py`, you'll need a virtual MIDI port (e.g., [loopMIDI](https://www.tobias-erichsen.de/software/loopmidi.html)) that intercepts and forwards MIDI CC data to your software or hardware synth. Once configured, this tool allows you to maximize your DX7’s control capabilities without additional equipment.
 
-### 2. Patch Search App
+### 3. Patch Search App
 `PatchSearchApp.py` is a tool for searching DX7 SysEx files for specific patches. With this utility, you can quickly find patches within your collection, streamlining the process of locating sounds and loading them onto your DX7.
+
+### 4. SysEx Sendung Tool
+`sendsysex.py` enables the sending of SysEx data
 
 ## Requirements
 - [loopMIDI](https://www.tobias-erichsen.de/software/loopmidi.html) or another virtual MIDI port utility
@@ -18,6 +24,7 @@ To use `mididebug.py`/`midi.py`, you'll need a virtual MIDI port (e.g., [loopMID
 - compatible Hardware:
 	 - `patchsearcher.py`: Any Yamaha DX/FM synth which uses the same SysEx Format as the DX7
 	 - `mididebug.py`/`midi.py`: A Yamaha DX7 MK1 (tested), Yamaha DX7II/S (not tested) or any other Yamaha DX Synth (might need a code adjustment)
+    - `sendsysex.py`: Any Synth/mid compatible gear which can recieve SysEx (Testet) or any Midi Data (not testet)
 
 ## Usage
 
@@ -57,25 +64,35 @@ OR
    ```
    (without the Debug Messages)
 
-### Running `patchsearcher.py`
+### Running `PatchSearchApp.py`
 To search through your SysEx files for specific patches, execute:
    ```bash
    python patchsearcher.py
    ```
-
+### Running `sendsysex.py`
+To send SysEx commands to the configured Midi Ports exexute:
+   ```bash
+   python sendsysex.py <sysex_file>
+   ```
 ## TODOs
 
 ### General
 - Translate the entire project from German to English.
 - Implement multilingual support for broader accessibility.
 
+### `config.py`
+- optimizibg ghe midi connecticity
+- optimizing the auto calibration/midi port testing
+
+### `sensysex.py`
+- optimizibg ghe midi connecticity
+
 ### `patchsearcher.py`
-- Improve patch name conversion to ensure accuracy.
 - Enhance patch-to-instrument mapping for better organization.
-- Integrate `patchsearcher.py` more seamlessly with the Dexed emulator/Patch editor.
+- Integrate `PatchSearchApp.py` more seamlessly with the Dexed emulator/Patch editor.
 - Develop an in-app patch browser for easier navigation.
 - Improve performance and efficiency.
-- Add support for sending SysEx files directly to Yamaha DX7, DX7S, DX7II, TX7, and TX802 synthesizers.
+- Improve sending SysEx files directly to Yamaha DX7, DX7S, DX7II, TX7, and TX802 synthesizers.
 
 ### `mididebug.py`
 - Optimize performance and reduce latency.
