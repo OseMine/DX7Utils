@@ -4,6 +4,7 @@ import sys
 import subprocess
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk, Menu
+import sendsysex as send
 
 # Debug-Funktion zum Ausgeben von Nachrichten
 def debug_print(message):
@@ -115,6 +116,8 @@ def open_with_dexed(file_path, dexed_path, patch_number):
     except Exception as e:
         debug_print(f"Fehler beim Öffnen der Datei mit Dexed: {e}")
 
+
+
 class SysexSearchApp:
     def __init__(self, root):
         self.root = root
@@ -147,7 +150,7 @@ class SysexSearchApp:
         self.context_menu = Menu(self.root, tearoff=0)
         self.context_menu.add_command(label="Öffnen", command=self.context_open_file)
         self.context_menu.add_command(label="Mit Dexed öffnen", command=self.context_open_with_dexed)
-
+        self.context_menu.add_command(label="An DX7 senden", command=self.send_to_dx7)
         self.directory, self.dexed_path = load_config()
         debug_print(f"Verzeichnis: {self.directory}, Dexed-Pfad: {self.dexed_path}")
 
@@ -205,6 +208,21 @@ class SysexSearchApp:
         full_path = os.path.join(self.directory, file_path)
         debug_print(f"Kontextmenü: Öffne mit Dexed {full_path}, Patch: {patch_number}")
         open_with_dexed(full_path, self.dexed_path, patch_number)
+    
+    def send_to_dx7(self):
+        item = self.result_tree.selection()[0]
+        file_path = self.result_tree.item(item, "values")[0]
+        full_path = os.path.join(self.directory, file_path)
+        self.send_sysex(full_path)
+    def send_sysex(self, file_path):
+        try:
+            send.send_sysex(file_path)
+            print(f'Gesendet: {file_path}')
+        except Exception as e:
+            print(f'Fehler beim Senden: {e}')
+            messagebox.showerror("Fehler", f"Fehler beim Senden der Datei: {e}")
+    
+
 
 if __name__ == "__main__":
     debug_print("Starte Anwendung")

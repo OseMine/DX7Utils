@@ -7,28 +7,28 @@ DX7Utils is a set of utilities designed to enhance the experience of using the Y
 ### 1.MIDI TOOL
 `mididebug.py`/`midi.py` enables the use of the Data Entry slider (MIDI CC 6) in combination with the 32 patch buttons (MIDI Program Change 0-31) as 32 individual MIDI CC inputs. This setup is particularly useful if you don’t have a dedicated master keyboard, allowing you to control various parameters on the DX7.
 
-To use `mididebug.py`, you'll need a virtual MIDI port (e.g., [loopMIDI](https://www.tobias-erichsen.de/software/loopmidi.html)) that intercepts and forwards MIDI CC data to your software or hardware synth. Once configured, this tool allows you to maximize your DX7’s control capabilities without additional equipment.
+To use `mididebug.py`/`midi.py`, you'll need a virtual MIDI port (e.g., [loopMIDI](https://www.tobias-erichsen.de/software/loopmidi.html)) that intercepts and forwards MIDI CC data to your software or hardware synth. Once configured, this tool allows you to maximize your DX7’s control capabilities without additional equipment.
 
-### 2. Patch Search Engine
-`patchsearcher.py` is a tool for searching DX7 SysEx files for specific patches. With this utility, you can quickly find patches within your collection, streamlining the process of locating sounds and loading them onto your DX7.
+### 2. Patch Search App
+`PatchSearchApp.py` is a tool for searching DX7 SysEx files for specific patches. With this utility, you can quickly find patches within your collection, streamlining the process of locating sounds and loading them onto your DX7.
 
 ## Requirements
 - [loopMIDI](https://www.tobias-erichsen.de/software/loopmidi.html) or another virtual MIDI port utility
 - Python 3.x
 - compatible Hardware:
-	 - `patchsearcher.py`: Any Yamaha DX/FM synth which uses the same syx Format as the DX7
+	 - `patchsearcher.py`: Any Yamaha DX/FM synth which uses the same SysEx Format as the DX7
 	 - `mididebug.py`/`midi.py`: A Yamaha DX7 MK1 (tested), Yamaha DX7II/S (not tested) or any other Yamaha DX Synth (might need a code adjustment)
 
 ## Usage
 
 ### Setup
-1. Install the necessary dependencies.
-2. Configure `loopMIDI` or another virtual MIDI port tool.
-3. Clone this repository:
+1. Configure `loopMIDI` or another virtual MIDI port tool.
+2. Clone this repository:
    ```bash
    git clone https://github.com/OseMine/DX7Utils.git
    cd DX7Utils
    ```
+3. Install the necessary dependencies by running the `install.sh` file (for MacOs an Linux) or the `install.bat` file (for Windows)
 4. Maybe disable The Debug Messages in the `patchsearcher.py`, by opening it with any Text editor and chang these lines
   ```python
     def debug_print(message):
@@ -39,7 +39,8 @@ to these lines
     def debug_print(message):
     #print(f"[DEBUG] {message}")
   ```
-5. Run the utility of your choice.
+5. Run the `config.py` file, by running `python config.py`, to set up your Midi devices and SysEx File Locations
+6. Run the utility of your choice.
 
 ### Running `mididebug.py`
 Use `mididebug.py` to enhance your control setup by executing:
