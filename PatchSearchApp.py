@@ -35,13 +35,21 @@ def find_sysex_files(directory):
         debug_print(f"  {file}")
     return sysex_files
 
-def detect_instrument_type(data):
-    if len(data) == 4096 + 6:  # DX7 MK1 format
-        return "DX7 MK1"
-    elif len(data) == 4096 + 8:  # DX7 II format
-        return "DX7 II"
-    elif len(data) == 4096 + 7:  # TX802 format
-        return "TX802"
+def identify_instrument(file_size):
+    if file_size == 4104:  # 4096 + 8 bytes header/footer
+        return "Yamaha DX7"
+    elif file_size == 4096:
+        return "Yamaha DX7II or TX802"
+    elif file_size == 4942:
+        return "Yamaha DX7s"
+    elif file_size == 163:
+        return "Yamaha TX7"
+    elif file_size == 4096 * 2:
+        return "Yamaha DX1 or DX5"
+    elif file_size == 4096 * 2 + 8:
+        return "Yamaha DX7IIFD"
+    elif file_size == 4104 * 8:
+        return "Yamaha TX816"
     else:
         return "Unknown"
 
@@ -49,31 +57,24 @@ def extract_patch_names(file_path):
     patch_names = []
     instrument_type = "Unknown"
     try:
+        file_size = os.path.getsize(file_path)
+        instrument_type = identify_instrument(file_size)
+        
         with open(file_path, 'rb') as f:
-            data = f.read()
-            instrument_type = detect_instrument_type(data)
+            f.read(6)  # Header überspringen
             
-            if instrument_type == "DX7 MK1":
-                offset = 6
-                patch_count = 32
-            elif instrument_type in ["DX7 II", "TX802"]:
-                offset = 8
-                patch_count = 32
+            if instrument_type in ["Yamaha DX1 or DX5", "Yamaha DX7IIFD"]:
+                num_voices = 64
+            elif instrument_type == "Yamaha TX816":
+                num_voices = 256
             else:
-                return [], instrument_type
-
-            for i in range(patch_count):
-                start = offset + i * 128
-                end = start + 10
-                patch_bytes = data[start:end]
-                patch_name = ''
-                for byte in patch_bytes:
-                    if byte == 0:
-                        break
-                    if 32 <= byte <= 127:
-                        patch_name += chr(byte)
-                    else:
-                        patch_name += f'[{byte}]'
+                num_voices = 32
+            
+            for voice_number in range(num_voices):
+                f.read(6 * 17)  # Operator-Daten überspringen
+                f.read(16)  # Globale Parameter überspringen
+                name_data = f.read(10)
+                patch_name = ''.join(c for c in name_data.decode('ascii', 'ignore') if c.isalnum())
                 patch_names.append(patch_name.strip())
         
         debug_print(f"Extrahierte Patch-Namen aus {file_path}: {patch_names}")
@@ -82,15 +83,17 @@ def extract_patch_names(file_path):
     
     return patch_names, instrument_type
 
+
 def search_patch_names(files, search_term):
     results = []
     for file in files:
         patch_names, instrument_type = extract_patch_names(file)
         matching_patches = [(file, i+1, name, instrument_type) for i, name in enumerate(patch_names) if search_term.lower() in name.lower()]
         results.extend(matching_patches)
-    results.sort(key=lambda x: (x[2].lower(), x[0]))  # Sortiere nach Patchname und dann nach Dateipfad
+    results.sort(key=lambda x: (x[2].lower(), x[0]))
     debug_print(f"Sortierte Suchergebnisse: {results}")
     return results
+
 
 def open_file_in_explorer(file_path):
     try:
