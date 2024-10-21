@@ -146,6 +146,7 @@ venv.bak/
 dmypy.json
 # config files
 config.json
+fader_values.json
 # Pyre type checker
 .pyre/
 
