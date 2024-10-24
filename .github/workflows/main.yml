@@ -1,0 +1,40 @@
+name: Compile Python to C
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+
+    - name: Install Cython
+      run: pip install cython
+
+    - name: Install GCC
+      uses: shogo82148/actions-setup-gcc@v1.3.0
+      with:
+        version: 'latest'
+
+    - name: Convert Python to C with Cython
+      run: |
+        for file in *.py; do
+          cython --embed "$file" -o "${file%.py}.c"
+        done
+
+    - name: Compile C files with GCC
+      run: |
+        for file in *.c; do
+          gcc "$file" -o "${file%.c}" $(python3-config --cflags --ldflags)
+        done
