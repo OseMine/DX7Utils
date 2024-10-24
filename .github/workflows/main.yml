@@ -1,0 +1,86 @@
+name: Compile Python to C Executables
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install Cython
+        run: pip install cython
+
+      - name: Convert Python to C with Cython
+        run: |
+          mkdir -p build/linux
+          for file in *.py; do
+            cython --embed "$file" -o "build/linux/${file%.py}.c"
+          done
+
+      - name: Compile C files with GCC for Linux
+        run: |
+          for file in build/linux/*.c; do
+            gcc "$file" -o "build/linux/${file%.c}" $(python3-config --cflags --ldflags)
+          done
+
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install Cython
+        run: pip install cython
+
+      - name: Convert Python to C with Cython
+        run: |
+          mkdir -p build/macos
+          for file in *.py; do
+            cython --embed "$file" -o "build/macos/${file%.py}.c"
+          done
+
+      - name: Compile C files with GCC for macOS
+        run: |
+          for file in build/macos/*.c; do
+            gcc "$file" -o "build/macos/${file%.c}" $(python3-config --cflags --ldflags)
+          done
+
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install Cython
+        run: pip install cython
+
+      - name: Convert Python to C with Cython
+        run: |
+          mkdir build\windows
+          for %f in (*.py) do cython --embed "%f" -o "build\windows\%~nf.c"
+
+      - name: Compile C files with GCC for Windows
+        shell: cmd
+        run: |
+          for %f in (build\windows\*.c) do gcc "%f" -o "build\windows\%~nf.exe" %PYTHON_HOME%\libs\python310.lib %PYTHON_HOME%\include /I %PYTHON_HOME%\include /link /LIBPATH:%PYTHON_HOME%\libs /LIBPATH:%PYTHON_HOME%\PCbuild\amd64 
