@@ -22,10 +22,8 @@ jobs:
     - name: Install Cython
       run: pip install cython
 
-    - name: Install GCC
-      uses: shogo82148/actions-setup-gcc@v1.3.0
-      with:
-        version: 'latest'
+    - name: Check GCC version
+      run: gcc --version
 
     - name: Convert Python to C with Cython
       run: |
