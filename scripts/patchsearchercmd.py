@@ -1,5 +1,7 @@
-import os
 import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from dx7utils.common import debug_print, load_config_simple, find_sysex_files
 from dx7utils.sysex import extract_patch_names
 

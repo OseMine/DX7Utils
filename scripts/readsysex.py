@@ -1,4 +1,7 @@
+import sys
 import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 import json
 from dx7utils.common import debug_print, find_sysex_files, identify_instrument
 from dx7utils.sysex import extract_patch_names, format_name

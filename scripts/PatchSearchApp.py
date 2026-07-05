@@ -1,10 +1,12 @@
-import os
 import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 import subprocess
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk, Menu
 import threading
-import sendsysex as send
+import scripts.sendsysex as send
 from dx7utils.common import debug_print, load_config, find_sysex_files
 from dx7utils.sysex import extract_patch_names
 

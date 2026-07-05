@@ -1,10 +1,12 @@
+import sys
 import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 import json
 import tkinter as tk
 from tkinter import filedialog, ttk, messagebox
 import mido
 import time
-import sys
 import threading
 import rtmidi
 from dx7utils.common import debug_print

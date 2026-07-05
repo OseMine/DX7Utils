@@ -1,3 +1,7 @@
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 import mido
 import time
 from dx7utils.midi_core import fader_values, current_program, load_from_json, save_to_json, send_midi_cc, display_fader_value
