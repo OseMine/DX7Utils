@@ -29,19 +29,13 @@ def extract_patch_names(file_path):
     patch_names = []
     try:
         with open(file_path, 'rb') as f:
-            data = f.read()
-            
-            # Die Yamaha DX7 SysEx-Daten beginnen in der Regel mit F0 (Sysex Start) und enden mit F7 (Sysex End)
-            # Die Patch-Namen bestehen normalerweise aus 10 ASCII-Zeichen und sind im DX7 SysEx gespeichert
-            # DX7 SysEx-Dump: Patch-Namen befinden sich an einer bestimmten Position, z.B. bei Bytes 118 bis 127 für jeden Patch
-            
-            # Annehmen, dass Patch-Namen an festen Positionen in der Datei sind
+            f.read(6)  # SysEx-Header überspringen (F0 43 00 09 20 00)
             for i in range(32):  # 32 Patches pro Bank
-                start = 118 + i * 128  # Dies ist eine grobe Annahme für die Position der Patch-Namen
-                end = start + 10
-                patch_name = data[start:end].decode('ascii', errors='ignore').strip()
+                f.read(6 * 17)  # Operator-Daten überspringen (6 Operatoren à 17 Bytes)
+                f.read(16)      # Globale Parameter überspringen
+                name_data = f.read(10)  # 10-Byte Patch-Name
+                patch_name = name_data.decode('ascii', errors='ignore').strip()
                 patch_names.append(patch_name)
-                
     except Exception as e:
         print(f"Fehler beim Lesen der Datei {file_path}: {e}")
     return patch_names

@@ -13,19 +13,37 @@ def error_message(message):
 
 # 32 Variablen, um die Fader-Werte und CC-Werte für jedes Programm zu speichern
 fader_values = {f'program_{i}': {'fader_value': 0, 'cc_value': 0} for i in range(32)}
-debug_message(f"Initiale Fader-Werte: {fader_values}")
 
 current_program = None  # Aktuelles aktives Programm (0 bis 31)
-debug_message(f"Aktuelles Programm (Startwert): {current_program}")
+
+def load_from_json(file_name='fader_values.json'):
+    """Lädt die Fader-Werte aus einer JSON-Datei, falls vorhanden."""
+    try:
+        with open(file_name, 'r') as file:
+            data = json.load(file)
+        for key, value in data.items():
+            if key in fader_values:
+                if isinstance(value, dict):
+                    fader_values[key]['fader_value'] = value.get('fader_value', 0)
+                    fader_values[key]['cc_value'] = value.get('cc_value', 0)
+                else:
+                    fader_values[key]['fader_value'] = value
+        debug_message(f"Fader-Werte aus {file_name} geladen.")
+    except FileNotFoundError:
+        debug_message(f"{file_name} nicht gefunden, verwende Standardwerte.")
+    except Exception as e:
+        error_message(f"Fehler beim Laden der Fader-Werte: {e}")
+
+load_from_json()
 
 def clear_console_line():
     """Löscht die aktuelle Zeile in der Konsole."""
     print("\033[A\033[K", end='')
 
-def display_fader_value(fader_value, cc_value):
+def display_fader_value(program, fader_value, cc_value):
     """Gibt den aktuellen Fader-Wert und CC-Wert in einer statischen Zeile aus."""
     clear_console_line()
-    print(f"Aktuelles Programm: {current_program} | Fader-Wert (CC {current_program}): {fader_value}, CC Wert: {cc_value}", end='\r')
+    print(f"Aktuelles Programm: {program} | Fader-Wert (CC {program}): {fader_value}, CC Wert: {cc_value}", end='\r')
 
 def save_to_json(file_name='fader_values.json'):
     """Speichert die Fader-Werte in einer JSON-Datei."""
@@ -92,61 +110,60 @@ def main():
             try:
                 while True:
                     for msg in inport.iter_pending(): 
-                        # Zeige jede empfangene MIDI-Nachricht an
                         debug_message(f"Empfangene MIDI-Nachricht: {msg}")
 
-                        # Direktes Senden spezifischer MIDI-Nachrichtentypen
-                        if msg.type in ['pitchwheel', 'control_change', 'note_on']:
+                        # Direktes Durchleiten spezifischer MIDI-Nachrichtentypen
+                        if msg.type in ['pitchwheel', 'note_on']:
                             virtual_output.send(msg)
                             debug_message(f"Gesendete Nachricht: {msg}")
 
                         # Wenn eine Program Change-Nachricht empfangen wird
                         if msg.type == 'program_change' and 0 <= msg.program <= 31:
-                            # Setze das aktuelle Programm, wodurch der gewählte CC bestimmt wird
                             current_program = msg.program
                             debug_message(f"Programm gewechselt zu: {current_program}")
 
-                        # Wenn eine Control Change-Nachricht empfangen wird
-                        if msg.type == 'control_change' and current_program is not None:
-                            # Aktualisiere den CC-Wert für das aktuelle Programm
+                        # Wenn eine Control Change-Nachricht (außer CC 6) empfangen wird
+                        if msg.type == 'control_change' and msg.control != 6 and current_program is not None:
                             fader_values[f'program_{current_program}']['cc_value'] = msg.value
                             cc_value = fader_values[f'program_{current_program}']['cc_value']
                             debug_message(f"Aktueller CC-Wert für Programm {current_program}: {cc_value}")
 
-                            # Aktualisiere den Fader-Wert, wenn CC-Wert sich ändert
                             fader_value = fader_values[f'program_{current_program}']['fader_value']
-                            display_fader_value(fader_value, cc_value)
+                            display_fader_value(current_program, fader_value, cc_value)
 
-                            # Sende den geänderten CC-Wert mit der entsprechenden CC-Nummer
                             send_midi_cc(virtual_output, current_program, cc_value)
 
-                        # Wenn eine spezielle Control Change-Nachricht für Fader (CC 6) empfangen wird
+                        # Wenn die Data Entry Slider-Nachricht (CC 6) empfangen wird
                         if msg.type == 'control_change' and msg.control == 6 and current_program is not None:
-                            # Lese den aktuellen Fader-Wert des gewählten Programms
                             current_value = fader_values[f'program_{current_program}']['fader_value']
                             debug_message(f"Aktueller Fader-Wert für Programm {current_program}: {current_value}")
 
                             # Nur senden, wenn der Fader-Wert sich geändert hat
                             if msg.value != current_value:
-                                # Speichere den neuen Fader-Wert
                                 fader_values[f'program_{current_program}']['fader_value'] = msg.value
-                                display_fader_value(msg.value, fader_values[f'program_{current_program}']['cc_value'])
+                                display_fader_value(current_program, msg.value, fader_values[f'program_{current_program}']['cc_value'])
 
                                 debug_message(f"Neuer Fader-Wert für Programm {current_program}: {msg.value}")
                                 debug_message(f"Fader-Werte aktualisiert: {fader_values}")
 
-                                # Sende den geänderten Fader-Wert mit der entsprechenden CC-Nummer
                                 send_midi_cc(virtual_output, current_program, msg.value)
 
-                    time.sleep(0.01)  # Geringe Pause, um die CPU zu schonen
+                    time.sleep(0.01)
             except KeyboardInterrupt:
                 print("\nProgramm wurde durch den Benutzer beendet.")
                 debug_message("Programm durch KeyboardInterrupt beendet")
     except OSError as e:
         error_message(f"Fehler beim Öffnen des MIDI-Eingangsports: {e}")
     finally:
-        # Speichere die Daten in eine JSON-Datei, wenn das Programm beendet wird
         save_to_json()
+    try:
+        virtual_output.close()
+    except Exception:
+        pass
+        try:
+            virtual_output.close()
+        except Exception:
+            pass
 
 if __name__ == "__main__":
     debug_message("Programm startet")

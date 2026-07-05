@@ -1,6 +1,5 @@
 import os
 import json
-import struct
 
 def format_name(name):
     return ''.join(c for c in name.decode('ascii', 'ignore') if c.isalnum())

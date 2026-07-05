@@ -179,8 +179,16 @@ class SysexSearchApp:
             debug_print(f"Keine Patches für '{search_term}' gefunden.")
             messagebox.showinfo("Keine Übereinstimmung", f"Keine Patches für '{search_term}' gefunden.")
 
+    def get_selected_item(self):
+        selection = self.result_tree.selection()
+        if not selection:
+            return None
+        return selection[0]
+
     def on_file_double_click(self, event):
-        item = self.result_tree.selection()[0]
+        item = self.get_selected_item()
+        if not item:
+            return
         file_path = self.result_tree.item(item, "values")[0]
         full_path = os.path.join(self.directory, file_path)
         debug_print(f"Doppelklick auf Datei: {full_path}")
@@ -194,32 +202,38 @@ class SysexSearchApp:
             self.context_menu.tk_popup(event.x_root, event.y_root)
 
     def context_open_file(self):
-        item = self.result_tree.selection()[0]
+        item = self.get_selected_item()
+        if not item:
+            return
         file_path = self.result_tree.item(item, "values")[0]
         full_path = os.path.join(self.directory, file_path)
         debug_print(f"Kontextmenü: Öffne Datei {full_path}")
         open_file_in_explorer(full_path)
 
     def context_open_with_dexed(self):
-        item = self.result_tree.selection()[0]
+        item = self.get_selected_item()
+        if not item:
+            return
         values = self.result_tree.item(item, "values")
         file_path = values[0]
         patch_number = int(values[1])
         full_path = os.path.join(self.directory, file_path)
         debug_print(f"Kontextmenü: Öffne mit Dexed {full_path}, Patch: {patch_number}")
         open_with_dexed(full_path, self.dexed_path, patch_number)
-    
+
     def send_to_dx7(self):
-        item = self.result_tree.selection()[0]
+        item = self.get_selected_item()
+        if not item:
+            return
         file_path = self.result_tree.item(item, "values")[0]
         full_path = os.path.join(self.directory, file_path)
         self.send_sysex(full_path)
+
     def send_sysex(self, file_path):
         try:
             send.send_sysex(file_path)
-            print(f'Gesendet: {file_path}')
+            messagebox.showinfo("Erfolg", f"Gesendet: {file_path}")
         except Exception as e:
-            print(f'Fehler beim Senden: {e}')
             messagebox.showerror("Fehler", f"Fehler beim Senden der Datei: {e}")
     
 

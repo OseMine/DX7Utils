@@ -85,13 +85,23 @@ class ConfigApp:
             self.dexed_path.set(file)
             debug_print(f"Dexed Pfad ausgewählt: {file}")
 
-    def on_midi_in_change(self, event):
+    def start_midi_monitor(self):
         if self.midi_monitor_thread:
             self.stop_midi_monitor.set()
             self.midi_monitor_thread.join()
         self.stop_midi_monitor.clear()
         self.midi_monitor_thread = threading.Thread(target=self.monitor_midi_input)
+        self.midi_monitor_thread.daemon = True
         self.midi_monitor_thread.start()
+
+    def stop_midi_monitor_if_running(self):
+        if self.midi_monitor_thread:
+            self.stop_midi_monitor.set()
+            self.midi_monitor_thread.join()
+            self.midi_monitor_thread = None
+
+    def on_midi_in_change(self, event):
+        self.start_midi_monitor()
 
     def monitor_midi_input(self):
         try:
@@ -102,13 +112,14 @@ class ConfigApp:
                     self.midi_in.close_port()
                 self.midi_in.open_port(port_index)
                 debug_print(f"MIDI-Überwachung gestartet für Port: {self.midi_in_port.get()}")
+                # Cache channel value (Tkinter IntVar is not thread-safe)
+                channel = self.midi_channel.get() - 1
                 while not self.stop_midi_monitor.is_set():
                     msg = self.midi_in.get_message()
                     if msg:
                         message, delta_time = msg
                         if message[0] & 0xF0 in [0x80, 0x90]:  # Note On oder Note Off
-                            channel = message[0] & 0x0F
-                            if channel == self.midi_channel.get() - 1:
+                            if message[0] & 0x0F == channel:
                                 debug_print(f"MIDI-Eingang: {message}")
                     time.sleep(0.001)
                 self.midi_in.close_port()
@@ -121,6 +132,9 @@ class ConfigApp:
         debug_print("Starte MIDI-Test")
         debug_print(f"Verfügbare MIDI-Eingangsports: {mido.get_input_names()}")
         debug_print(f"Verfügbare MIDI-Ausgangsports: {mido.get_output_names()}")
+        
+        # Monitor-Thread stoppen, damit er nicht gleichzeitig auf self.midi_in zugreift
+        self.stop_midi_monitor_if_running()
         
         try:
             output_port = self.midi_out_port.get()
@@ -155,6 +169,7 @@ class ConfigApp:
                     
                     # Start listening for responses immediately
                     start_time = time.time()
+                    response_received = False
                     while time.time() - start_time < 2:  # 2 Sekunden Timeout
                         msg = self.midi_in.get_message()
                         if msg:
@@ -162,6 +177,7 @@ class ConfigApp:
                             debug_print(f"Empfangen: {message}")
                             if message[0] & 0xF0 in [0x90, 0x80]:  # Note On oder Note Off
                                 self.save_config()
+                                response_received = True
                                 debug_print("MIDI-Verbindung erfolgreich getestet und Konfiguration gespeichert")
                                 messagebox.showinfo("Erfolg", "MIDI-Verbindung getestet und Konfiguration gespeichert!")
                                 break
@@ -171,7 +187,7 @@ class ConfigApp:
                     outport.send(note_off)
                     debug_print(f"Gesendet: {note_off}")
 
-                    if time.time() - start_time >= 2:
+                    if not response_received:
                         debug_print("Keine Antwort vom MIDI-Gerät erhalten")
                         messagebox.showerror("Fehler", "Keine Antwort vom MIDI-Gerät erhalten.")
                     
@@ -188,6 +204,10 @@ class ConfigApp:
         except Exception as e:
             debug_print(f"Allgemeiner Fehler: {str(e)}")
             messagebox.showerror("Fehler", f"Unerwarteter Fehler beim MIDI-Test: {str(e)}")
+        finally:
+            # Monitor bei erfolgreicher Verbindung wieder starten
+            if self.midi_in_port.get() and self.midi_in_port.get() in mido.get_input_names():
+                self.start_midi_monitor()
 
     def save_config(self):
         config = {
