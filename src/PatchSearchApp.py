@@ -187,9 +187,13 @@ class SysexSearchApp:
             messagebox.showerror("Fehler", f"Fehler beim Senden der Datei: {e}")
 
 
-if __name__ == "__main__":
-    debug_print("Starte Anwendung")
+def main():
+    debug_print("Starte Patch-Suche")
     root = tk.Tk()
     app = SysexSearchApp(root)
     root.mainloop()
-    debug_print("Anwendung beendet")
+    debug_print("Patch-Suche beendet")
+
+
+if __name__ == "__main__":
+    main()

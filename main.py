@@ -5,26 +5,32 @@ import tkinter as tk
 from tkinter import messagebox
 
 TOOLS = [
-    ("⚙  Konfiguration", "src.config", "gui"),
-    ("🔍  Patch Suche (GUI)", "src.PatchSearchApp", "gui"),
-    ("───", "", ""),
-    ("🎛  MIDI Fader", "src.midi", "cli"),
-    ("💾  MIDI Backup", "src.midibackup", "cli"),
-    ("🐛  MIDI Debug", "src.mididebug", "cli"),
-    ("📋  Patch Suche (CLI)", "src.patchsearchercmd", "cli"),
-    ("📖  SysEx lesen", "src.readsysex", "cli"),
-    ("📤  SysEx senden", "src.sendsysex", "cli"),
-    ("🔌  MIDI Ports", "src.ports", "cli"),
+    ("⚙  Konfiguration", "src.config", "gui", None),
+    ("🔍  Patch Suche", "src.PatchSearchApp", "gui", None),
+    ("───", "", "", None),
+    ("🎛  MIDI Fader", "src.ui", "gui", "midi"),
+    ("💾  MIDI Backup", "src.ui", "gui", "midibackup"),
+    ("🐛  MIDI Debug", "src.ui", "gui", "mididebug"),
+    ("📋  Patch Suche (CLI)", "src.patchsearchercmd", "cli", None),
+    ("📖  SysEx lesen", "src.ui", "gui", "readsysex"),
+    ("📤  SysEx senden", "src.ui", "gui", "sendsysex"),
+    ("🔌  MIDI Ports", "src.ui", "gui", "ports"),
 ]
 
-TOOL_MAP = {m: (t, k) for t, m, k in TOOLS if m}
+TOOL_MAP: dict[str, tuple] = {}
+for t, m, k, a in TOOLS:
+    if m:
+        TOOL_MAP.setdefault(m, (t, k, a))
 
 
-def run_tool(module_name, kind):
+def run_tool(module_name, kind, tool_arg=None):
     try:
         if kind == "gui":
             mod = importlib.import_module(module_name)
-            mod.main()
+            if tool_arg:
+                mod.main(tool_arg)
+            else:
+                mod.main()
         else:
             subprocess.Popen(
                 [sys.executable, module_name],
@@ -50,7 +56,7 @@ class LauncherApp:
         frame = tk.Frame(root, bg="#f0f0f0")
         frame.pack(padx=20, pady=(0, 12), fill=tk.BOTH, expand=True)
 
-        for title, module, kind in TOOLS:
+        for title, module, kind, arg in TOOLS:
             if title == "───":
                 sep = tk.Frame(frame, height=1, bg="#ccc")
                 sep.pack(fill=tk.X, pady=6)
@@ -68,7 +74,7 @@ class LauncherApp:
                 padx=12,
                 pady=8,
                 cursor="hand2",
-                command=lambda m=module, k=kind: run_tool(m, k),
+                command=lambda m=module, k=kind, a=arg: run_tool(m, k, a),
             )
             btn.pack(fill=tk.X, pady=3)
 
@@ -82,8 +88,15 @@ def main():
     if len(sys.argv) > 1:
         module_name = sys.argv[1]
         if module_name in TOOL_MAP:
+            _, kind, arg = TOOL_MAP[module_name]
             mod = importlib.import_module(module_name)
-            mod.main()
+            if kind == "gui":
+                if arg:
+                    mod.main(arg)
+                else:
+                    mod.main()
+            else:
+                run_tool(module_name, kind, arg)
         else:
             print(f"Unbekanntes Werkzeug: {module_name}", file=sys.stderr)
             print("Verfügbar:", ", ".join(sorted(TOOL_MAP)))
