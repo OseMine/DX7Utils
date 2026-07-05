@@ -1,6 +1,6 @@
+import json
 import os
 import sys
-import json
 
 
 def debug_print(message):

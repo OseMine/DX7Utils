@@ -1,11 +1,10 @@
-import pytest
 import os
 import sys
 import tempfile
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
-from dx7utils.sysex import format_name, extract_patch_names
+from dx7utils.sysex import extract_patch_names, format_name
 
 
 class TestFormatName:

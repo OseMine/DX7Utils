@@ -1,12 +1,13 @@
-import pytest
+import json
 import os
 import sys
 import tempfile
-import json
+
+import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
-from src.sendsysex import load_midi_output_port, send_sysex
+from src.sendsysex import load_midi_output_port
 
 
 class TestLoadMidiOutputPort:

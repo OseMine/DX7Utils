@@ -1,12 +1,13 @@
-import pytest
+import json
 import os
 import sys
 import tempfile
-import json
+
+import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
-from dx7utils.common import identify_instrument, clear_console_line, find_sysex_files, load_config, load_config_simple
+from dx7utils.common import clear_console_line, find_sysex_files, identify_instrument, load_config, load_config_simple
 
 
 class TestIdentifyInstrument:

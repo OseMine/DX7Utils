@@ -1,13 +1,15 @@
-import sys
 import os
+import sys
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import subprocess
-import tkinter as tk
-from tkinter import filedialog, messagebox, ttk, Menu
 import threading
+import tkinter as tk
+from tkinter import Menu, messagebox, ttk
+
 import src.sendsysex as send
-from dx7utils.common import debug_print, load_config, find_sysex_files
+from dx7utils.common import debug_print, find_sysex_files, load_config
 from dx7utils.sysex import extract_patch_names
 
 
@@ -15,7 +17,11 @@ def search_patch_names(files, search_term):
     results = []
     for file in files:
         patch_names, instrument_type = extract_patch_names(file)
-        matching_patches = [(file, i+1, name, instrument_type) for i, name in enumerate(patch_names) if search_term.lower() in name.lower()]
+        matching_patches = [
+            (file, i+1, name, instrument_type)
+            for i, name in enumerate(patch_names)
+            if search_term.lower() in name.lower()
+        ]
         results.extend(matching_patches)
     results.sort(key=lambda x: (x[2].lower(), x[0]))
     debug_print(f"Sortierte Suchergebnisse: {results}")
@@ -104,7 +110,7 @@ class SysexSearchApp:
             self.root.after(0, self._populate_results, results)
         except Exception as e:
             debug_print(f"Fehler bei der Suche: {e}")
-            self.root.after(0, lambda: messagebox.showerror("Fehler", f"Fehler bei der Suche: {e}"))
+            self.root.after(0, lambda e=e: messagebox.showerror("Fehler", f"Fehler bei der Suche: {e}"))
         finally:
             self.root.after(0, self._search_done)
 
@@ -112,7 +118,10 @@ class SysexSearchApp:
         if results:
             for file_path, patch_nr, patch_name, instrument_type in results:
                 relative_path = os.path.relpath(file_path, self.directory)
-                debug_print(f"Gefundener Patch: {relative_path}, Nr. {patch_nr}: {patch_name}, Instrument: {instrument_type}")
+                debug_print(
+                    f"Gefundener Patch: {relative_path}, Nr. {patch_nr}:"
+                    f" {patch_name}, Instrument: {instrument_type}"
+                )
                 self.result_tree.insert('', 'end', values=(relative_path, patch_nr, patch_name, instrument_type))
         else:
             messagebox.showinfo("Keine Übereinstimmung", "Keine Patches für den Suchbegriff gefunden.")

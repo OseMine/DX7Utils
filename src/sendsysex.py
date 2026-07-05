@@ -1,9 +1,12 @@
-import sys
 import os
+import sys
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import mido
 import json
+
+import mido
+
 from dx7utils.common import debug_print
 
 

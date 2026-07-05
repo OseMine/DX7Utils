@@ -1,10 +1,13 @@
-import sys
 import os
+import sys
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import json
-from dx7utils.common import debug_print, find_sysex_files, identify_instrument
-from dx7utils.sysex import extract_patch_names, format_name
+
+from dx7utils.common import find_sysex_files
+from dx7utils.sysex import extract_patch_names
+
 
 def main():
     with open('data/config.json', 'r') as config_file:

@@ -1,7 +1,9 @@
-import os
 import json
+import os
+
 import mido
-from dx7utils.common import debug_print, clear_console_line
+
+from dx7utils.common import clear_console_line, debug_print
 
 fader_values = {f'program_{i}': {'fader_value': 0, 'cc_value': 0} for i in range(32)}
 

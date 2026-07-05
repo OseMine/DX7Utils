@@ -1,11 +1,20 @@
-import sys
 import os
+import sys
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import mido
 import time
-from dx7utils.midi_core import fader_values, current_program, load_from_json, save_to_json, send_midi_cc, display_fader_value
-from dx7utils.common import debug_print
+
+import mido
+
+from dx7utils.midi_core import (
+    display_fader_value,
+    fader_values,
+    load_from_json,
+    save_to_json,
+    send_midi_cc,
+)
+
 
 def debug_message(message):
     print(f"\033[92mdebug: {message}\033[0m")
@@ -81,7 +90,8 @@ def main():
 
                             if msg.value != current_value:
                                 fader_values[f'program_{current_program}']['fader_value'] = msg.value
-                                display_fader_value(current_program, msg.value, fader_values[f'program_{current_program}']['cc_value'])
+                                cc = fader_values[f'program_{current_program}']['cc_value']
+                                display_fader_value(current_program, msg.value, cc)
 
                                 debug_message(f"Neuer Fader-Wert für Programm {current_program}: {msg.value}")
                                 debug_message(f"Fader-Werte aktualisiert: {fader_values}")
