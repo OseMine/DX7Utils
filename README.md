@@ -18,6 +18,17 @@ To use `mididebug.py`/`midi.py`, you'll need a virtual MIDI port (e.g., [loopMID
 ### 4. SysEx Sendung Tool
 `sendsysex.py` enables the sending of SysEx data
 
+## Tech Stack
+
+| Category | Technology |
+|---|---|
+| **Language** | Python 3.9+ |
+| **MIDI** | [mido](https://mido.readthedocs.io/) (MIDI message handling), [python-rtmidi](https://spotlightkid.github.io/python-rtmidi/) (real-time MIDI I/O) |
+| **GUI** | Tkinter (config tool, patch search app) |
+| **Testing** | pytest |
+| **CI/CD** | GitHub Actions — Cython compilation to standalone binaries for Linux, macOS, Windows |
+| **Hardware** | Yamaha DX7 (MK1 tested), DX7II/S, TX7, TX802, TX816 |
+
 ## Requirements
 - [loopMIDI](https://www.tobias-erichsen.de/software/loopmidi.html) or another virtual MIDI port utility
 - Python 3.x
