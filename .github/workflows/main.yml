@@ -131,9 +131,18 @@ jobs:
       - name: Copy runtime sources
         shell: pwsh
         run: |
+          $prefix = python -c "import sys; print(sys.prefix)"
           Copy-Item -Recurse -Path "src" -Destination "build/windows/"
           Copy-Item -Recurse -Path "dx7utils" -Destination "build/windows/"
           if (Test-Path "data") { Copy-Item -Recurse -Path "data" -Destination "build/windows/" }
+          # Copy Python DLL so the exe runs standalone
+          Copy-Item -Path "$prefix/python312.dll" -Destination "build/windows/"
+          # Copy bundled stdlib zip if available, else copy full Lib
+          if (Test-Path "$prefix/python312.zip") {
+            Copy-Item -Path "$prefix/python312.zip" -Destination "build/windows/"
+          } elseif (Test-Path "$prefix/Lib") {
+            Copy-Item -Recurse -Path "$prefix/Lib" -Destination "build/windows/"
+          }
       - uses: actions/upload-artifact@v4
         with:
           name: windows-binaries
