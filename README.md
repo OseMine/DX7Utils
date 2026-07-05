@@ -103,8 +103,3 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 
 ## Contributing
 Contributions, issues, and feature requests are welcome! Feel free to check the issues page or submit a pull request.
-
-## Contact
-For questions or support, please reach out to the project maintainer (@OseMine) by sending me A DM on Instagram ([@the.muzikar](https://www.instagram.com/the.muzikar/) or contacting via [Email](mailto:oskar.wiedrich@gmail.com)).
-
-Enjoy using DX7Utils and happy synthesizing!
