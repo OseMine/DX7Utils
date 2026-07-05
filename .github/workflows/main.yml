@@ -96,9 +96,18 @@ jobs:
             Write-Host "Choco MinGW not found, using system GCC"
           }
 
+          # Create an object that forces console subsystem (.drectve section)
+          # linked AFTER python312.lib to override any MSVC /SUBSYSTEM:WINDOWS
+          $consoleFlag = "$env:TEMP\subsystem_console.c"
+          Set-Content $consoleFlag @'
+#pragma comment(linker, "/subsystem:console")
+'@
+          $consoleObj = "$env:TEMP\subsystem_console.o"
+          gcc -c $consoleFlag -o $consoleObj -I "$inc"
+
           Get-ChildItem -Path "build/windows/*.c" | ForEach-Object {
             gcc $_.FullName -o "$($_.DirectoryName)\$($_.BaseName).exe" `
-              -I "$inc" -L "$libsDir" "-l:$lib" -mconsole "-Wl,--subsystem,console"
+              -I "$inc" -L "$libsDir" "-l:$lib" $consoleObj
           }
       - uses: actions/upload-artifact@v4
         with:
