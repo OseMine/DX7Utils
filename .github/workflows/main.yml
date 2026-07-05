@@ -10,77 +10,82 @@ jobs:
   build-linux:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
-
+          python-version: '3.12'
       - name: Install Cython
         run: pip install cython
-
-      - name: Convert Python to C with Cython
+      - name: Convert Python to C
         run: |
           mkdir -p build/linux
           for file in *.py; do
             cython --embed "$file" -o "build/linux/${file%.py}.c"
           done
-
-      - name: Compile C files with GCC for Linux
+      - name: Compile C files with GCC
         run: |
           for file in build/linux/*.c; do
             gcc "$file" -o "build/linux/${file%.c}" $(python3-config --cflags --ldflags)
           done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-binaries
+          path: build/linux/
 
   build-macos:
     runs-on: macos-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
-
+          python-version: '3.12'
       - name: Install Cython
         run: pip install cython
-
-      - name: Convert Python to C with Cython
+      - name: Convert Python to C
         run: |
           mkdir -p build/macos
           for file in *.py; do
             cython --embed "$file" -o "build/macos/${file%.py}.c"
           done
-
-      - name: Compile C files with GCC for macOS
+      - name: Compile C files with GCC
         run: |
           for file in build/macos/*.c; do
             gcc "$file" -o "build/macos/${file%.c}" $(python3-config --cflags --ldflags)
           done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos-binaries
+          path: build/macos/
 
   build-windows:
     runs-on: windows-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
-
+          python-version: '3.12'
       - name: Install Cython
         run: pip install cython
-
-      - name: Convert Python to C with Cython
+      - name: Install MinGW-w64
+        run: choco install mingw --version=13.2.0 --no-progress -y
+      - name: Convert Python to C
+        shell: pwsh
         run: |
-          mkdir build\windows
-          for %f in (*.py) do cython --embed "%f" -o "build\windows\%~nf.c"
-
-      - name: Compile C files with GCC for Windows
-        shell: cmd
+          mkdir -p build/windows
+          Get-ChildItem -Filter "*.py" | ForEach-Object {
+            cython --embed $_.Name -o "build/windows/$($_.BaseName).c"
+          }
+      - name: Compile C files with GCC
+        shell: pwsh
         run: |
-          for %f in (build\windows\*.c) do gcc "%f" -o "build\windows\%~nf.exe" %PYTHON_HOME%\libs\python310.lib %PYTHON_HOME%\include /I %PYTHON_HOME%\include /link /LIBPATH:%PYTHON_HOME%\libs /LIBPATH:%PYTHON_HOME%\PCbuild\amd64 
+          $inc = python -c "import sysconfig; print(sysconfig.get_path('include'))"
+          $libs = python -c "import sysconfig; print(sysconfig.get_config_var('LIBDIR'))"
+          $ldflags = python -c "import sysconfig; print(sysconfig.get_config_var('LIBS'))"
+          Get-ChildItem -Path "build/windows/*.c" | ForEach-Object {
+            gcc $_.FullName -o "$($_.DirectoryName)\$($_.BaseName).exe" `
+              -I "$inc" -L "$libs" $ldflags -lpython312
+          }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-binaries
+          path: build/windows/
