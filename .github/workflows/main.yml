@@ -94,7 +94,7 @@ jobs:
 
           Get-ChildItem -Path "build/windows/*.c" | ForEach-Object {
             & $gcc $_.FullName -o "$($_.DirectoryName)\$($_.BaseName).exe" `
-              -I "$inc" -L "$libsDir" "-l:$lib" -mconsole -Wl,-subsystem,console
+              -I "$inc" -L "$libsDir" "-l:$lib" -mconsole "-Wl,-subsystem,console"
           }
       - uses: actions/upload-artifact@v4
         with:
