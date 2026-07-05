@@ -6,7 +6,7 @@ import subprocess
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk, Menu
 import threading
-import scripts.sendsysex as send
+import src.sendsysex as send
 from dx7utils.common import debug_print, load_config, find_sysex_files
 from dx7utils.sysex import extract_patch_names
 

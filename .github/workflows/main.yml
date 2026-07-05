@@ -19,7 +19,7 @@ jobs:
       - name: Convert Python to C
         run: |
           mkdir -p build/linux
-          for file in scripts/*.py; do
+          for file in src/*.py; do
             cython --embed "$file" -o "build/linux/$(basename ${file%.py}).c"
           done
       - name: Compile C files with GCC
@@ -44,7 +44,7 @@ jobs:
       - name: Convert Python to C
         run: |
           mkdir -p build/macos
-          for file in scripts/*.py; do
+          for file in src/*.py; do
             cython --embed "$file" -o "build/macos/$(basename ${file%.py}).c"
           done
       - name: Compile C files with GCC
@@ -72,7 +72,7 @@ jobs:
         shell: pwsh
         run: |
           mkdir -p build/windows
-          Get-ChildItem -Path "scripts/*.py" | ForEach-Object {
+          Get-ChildItem -Path "src/*.py" | ForEach-Object {
             cython --embed $_.FullName -o "build/windows/$($_.BaseName).c"
           }
       - name: Compile C files with GCC

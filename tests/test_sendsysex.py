@@ -6,7 +6,7 @@ import json
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
-from scripts.sendsysex import load_midi_output_port, send_sysex
+from src.sendsysex import load_midi_output_port, send_sysex
 
 
 class TestLoadMidiOutputPort:
