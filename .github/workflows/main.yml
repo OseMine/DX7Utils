@@ -88,13 +88,17 @@ jobs:
           }
           Write-Host "Using Python import library: $lib in $libsDir"
 
-          $chocoGcc = "C:\ProgramData\chocolatey\lib\mingw\tools\install\mingw64\bin\gcc.exe"
-          if (Test-Path $chocoGcc) { $gcc = $chocoGcc } else { $gcc = "gcc" }
-          Write-Host "Using GCC: $gcc"
+          $chocoPath = "C:\ProgramData\mingw64\mingw64\bin"
+          if (Test-Path "$chocoPath\gcc.exe") {
+            $env:PATH = "$chocoPath;$env:PATH"
+            Write-Host "Using choco MinGW at: $chocoPath"
+          } else {
+            Write-Host "Choco MinGW not found, using system GCC"
+          }
 
           Get-ChildItem -Path "build/windows/*.c" | ForEach-Object {
-            & $gcc $_.FullName -o "$($_.DirectoryName)\$($_.BaseName).exe" `
-              -I "$inc" -L "$libsDir" "-l:$lib" -mconsole "-Wl,-subsystem,console"
+            gcc $_.FullName -o "$($_.DirectoryName)\$($_.BaseName).exe" `
+              -I "$inc" -L "$libsDir" "-l:$lib" -mconsole "-Wl,--subsystem,console"
           }
       - uses: actions/upload-artifact@v4
         with:
