@@ -1,88 +1,12 @@
 import os
-import json
 import sys
 import subprocess
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk, Menu
+import threading
 import sendsysex as send
-
-# Debug-Funktion zum Ausgeben von Nachrichten
-def debug_print(message):
-    print(f"[DEBUG] {message}")
-
-def load_config():
-    try:
-        with open('config.json', 'r') as f:
-            config = json.load(f)
-        debug_print(f"Konfiguration geladen: {config}")
-        return config['directory'], config['dexed_path']
-    except FileNotFoundError:
-        debug_print("config.json nicht gefunden.")
-        sys.exit(1)
-    except KeyError:
-        debug_print("Pfad im config.json fehlt.")
-        sys.exit(1)
-
-def find_sysex_files(directory):
-    sysex_files = []
-    for root, dirs, files in os.walk(directory):
-        for file in files:
-            if file.endswith('.syx'):
-                full_path = os.path.join(root, file)
-                sysex_files.append(full_path)
-    
-    debug_print(f"Gefundene SysEx-Dateien: {len(sysex_files)}")
-    for file in sysex_files:
-        debug_print(f"  {file}")
-    return sysex_files
-
-def identify_instrument(file_size):
-    if file_size == 4104:  # 4096 + 8 bytes header/footer
-        return "Yamaha DX7"
-    elif file_size == 4096:
-        return "Yamaha DX7II or TX802"
-    elif file_size == 4942:
-        return "Yamaha DX7s"
-    elif file_size == 163:
-        return "Yamaha TX7"
-    elif file_size == 4096 * 2:
-        return "Yamaha DX1 or DX5"
-    elif file_size == 4096 * 2 + 8:
-        return "Yamaha DX7IIFD"
-    elif file_size == 4104 * 8:
-        return "Yamaha TX816"
-    else:
-        return "Unknown"
-
-def extract_patch_names(file_path):
-    patch_names = []
-    instrument_type = "Unknown"
-    try:
-        file_size = os.path.getsize(file_path)
-        instrument_type = identify_instrument(file_size)
-        
-        with open(file_path, 'rb') as f:
-            f.read(6)  # Header überspringen
-            
-            if instrument_type in ["Yamaha DX1 or DX5", "Yamaha DX7IIFD"]:
-                num_voices = 64
-            elif instrument_type == "Yamaha TX816":
-                num_voices = 256
-            else:
-                num_voices = 32
-            
-            for voice_number in range(num_voices):
-                f.read(6 * 17)  # Operator-Daten überspringen
-                f.read(16)  # Globale Parameter überspringen
-                name_data = f.read(10)
-                patch_name = ''.join(c for c in name_data.decode('ascii', 'ignore') if c.isalnum())
-                patch_names.append(patch_name.strip())
-        
-        debug_print(f"Extrahierte Patch-Namen aus {file_path}: {patch_names}")
-    except Exception as e:
-        debug_print(f"Fehler beim Lesen der Datei {file_path}: {e}")
-    
-    return patch_names, instrument_type
+from dx7utils.common import debug_print, load_config, find_sysex_files
+from dx7utils.sysex import extract_patch_names
 
 
 def search_patch_names(files, search_term):
@@ -115,7 +39,6 @@ def open_with_dexed(file_path, dexed_path, patch_number):
         debug_print(f"Datei mit Dexed geöffnet: {file_path}, Patch: {patch_number}")
     except Exception as e:
         debug_print(f"Fehler beim Öffnen der Datei mit Dexed: {e}")
-
 
 
 class SysexSearchApp:
@@ -160,24 +83,40 @@ class SysexSearchApp:
         if not search_term:
             messagebox.showwarning("Eingabefehler", "Bitte einen Suchbegriff eingeben.")
             return
-        
+
+        self.search_button.config(text="Suche läuft...", state=tk.DISABLED)
         for i in self.result_tree.get_children():
             self.result_tree.delete(i)
 
-        sysex_files = find_sysex_files(self.directory)
-        if not sysex_files:
-            messagebox.showwarning("Fehler", "Keine SysEx-Dateien gefunden.")
-            return
+        thread = threading.Thread(target=self._run_search, args=(search_term,), daemon=True)
+        thread.start()
 
-        results = search_patch_names(sysex_files, search_term)
+    def _run_search(self, search_term):
+        try:
+            sysex_files = find_sysex_files(self.directory)
+            if not sysex_files:
+                self.root.after(0, lambda: messagebox.showwarning("Fehler", "Keine SysEx-Dateien gefunden."))
+                return
+
+            results = search_patch_names(sysex_files, search_term)
+            self.root.after(0, self._populate_results, results)
+        except Exception as e:
+            debug_print(f"Fehler bei der Suche: {e}")
+            self.root.after(0, lambda: messagebox.showerror("Fehler", f"Fehler bei der Suche: {e}"))
+        finally:
+            self.root.after(0, self._search_done)
+
+    def _populate_results(self, results):
         if results:
             for file_path, patch_nr, patch_name, instrument_type in results:
                 relative_path = os.path.relpath(file_path, self.directory)
                 debug_print(f"Gefundener Patch: {relative_path}, Nr. {patch_nr}: {patch_name}, Instrument: {instrument_type}")
                 self.result_tree.insert('', 'end', values=(relative_path, patch_nr, patch_name, instrument_type))
         else:
-            debug_print(f"Keine Patches für '{search_term}' gefunden.")
-            messagebox.showinfo("Keine Übereinstimmung", f"Keine Patches für '{search_term}' gefunden.")
+            messagebox.showinfo("Keine Übereinstimmung", "Keine Patches für den Suchbegriff gefunden.")
+
+    def _search_done(self):
+        self.search_button.config(text="Suchen", state=tk.NORMAL)
 
     def get_selected_item(self):
         selection = self.result_tree.selection()
@@ -235,7 +174,6 @@ class SysexSearchApp:
             messagebox.showinfo("Erfolg", f"Gesendet: {file_path}")
         except Exception as e:
             messagebox.showerror("Fehler", f"Fehler beim Senden der Datei: {e}")
-    
 
 
 if __name__ == "__main__":

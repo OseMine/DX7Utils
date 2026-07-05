@@ -16,37 +16,37 @@
 
 - [x] **`display_fader_value()` uses unqualified global** — Now takes `current_program` as explicit parameter.
 
-## Design Issues
+## Design Issues (✓ All Resolved)
 
-### Recently Fixed
+### Fixed in First Pass
 
 - [x] **Thread safety in `config.py`** — Monitor thread is stopped before `test_and_save` accesses `self.midi_in`, restarted after. `monitor_midi_input` caches channel in a local int instead of reading Tkinter IntVar from background thread.
 
 - [x] **Hardcoded rtmidi backend** — Removed `backend='mido.backends.rtmidi'` from `sendsysex.py`, uses default backend now.
 
-### Still Open
+### Fixed in Second Pass
 
-- [ ] **Zero test coverage** — No unit or integration tests exist. `.gitignore` has pytest-related entries suggesting it was planned.
+- [x] **Zero test coverage** — `tests/` directory added with tests for `identify_instrument`, `format_name`, `extract_patch_names`, `clear_console_line`, `find_sysex_files`, `load_config`, `load_midi_output_port`. Run with `pytest` from repo root.
 
-- [ ] **Massive code duplication** — `identify_instrument()` copied in 2 files, `extract_patch_names()` implemented 3 different ways, `debug_print()` redefined in every file, `load_config()` duplicated, `find_sysex_files()` duplicated. Extract a shared `dx7utils/` module.
+- [x] **Massive code duplication** — Extracted shared functions into `dx7utils/common.py` (`debug_print`, `clear_console_line`, `load_config`, `load_config_simple`, `find_sysex_files`, `identify_instrument`), `dx7utils/sysex.py` (`extract_patch_names`, `format_name`), and `dx7utils/midi_core.py` (`fader_values`, `current_program`, `load_from_json`, `save_to_json`, `send_midi_cc`, `display_fader_value`). All files import from these shared modules.
 
-- [ ] **No package structure** — All files are standalone scripts at repo root with no `__init__.py`. Cannot `import dx7utils`. Create a proper package.
+- [x] **No package structure** — Created `dx7utils/` package with `__init__.py` that re-exports key functions. Package auto-initializes colorama on Windows for ANSI support.
 
-- [ ] **GUI search blocks main thread** — `PatchSearchApp.start_search()` runs synchronously, freezing the Tkinter UI for large collections. Use threading or `after()`.
+- [x] **GUI search blocks main thread** — `PatchSearchApp.start_search()` now runs `_run_search` in a background thread. The search button is disabled during the search, and results are populated via `root.after()` on the main thread.
 
-- [ ] **`config.py` doesn't validate paths before saving** — cartridge_path and dexed_path could be empty or invalid.
+- [x] **`config.py` doesn't validate paths before saving** — Added `validate_paths()` method that checks cartridge and dexed paths exist before saving. Errors shown in a messagebox.
 
-- [ ] **No virtual environment in install scripts** — `install.bat`/`install.sh` do a global pip install without a venv.
+- [x] **No virtual environment in install scripts** — `install.bat` and `install.sh` now create and activate a `.venv` before installing dependencies.
 
-- [ ] **CI tests EOL Python 3.8** — 3.8 is end-of-life since October 2024. Should drop 3.8 and add 3.11/3.12.
+- [x] **CI tests EOL Python 3.8** — Already handled: `ci.yml` tests 3.9–3.12, `pylint.yml` was deleted.
 
-- [ ] **CI Windows Cython build likely broken** — `main.yml` Windows build references `%PYTHON_HOME%` which isn't set by `actions/setup-python@v5`.
+- [x] **CI Windows Cython build likely broken** — Already fixed in CI workflow: replaced `%PYTHON_HOME%` with `sys.prefix` for correct include/libs paths.
 
-- [ ] **ANSI escape codes may not work on all Windows terminals** — `clear_console_line()` uses `\033[A\033[K` which fails on old cmd.exe.
+- [x] **ANSI escape codes may not work on all Windows terminals** — `clear_console_line()` in `dx7utils/common.py` checks `os.name` and uses spaces+carriage return on Windows. `dx7utils/__init__.py` calls `colorama.just_fix_windows_console()` on Windows for ANSI support in other places.
 
-- [ ] **`requirements.txt` pins exact versions** — Use `>=` for flexibility with security patches.
+- [x] **`requirements.txt` pins exact versions** — Changed `==` to `>=` for flexibility with security patches.
 
-## New Feature Ideas
+## New Feature Ideas (Still Open — Not Planned for Current Sprint)
 
 - [ ] **MIDI learn / CC mapping UI** — Let users remap which CC number each program sends, instead of hardcoding CC# = program#
 - [ ] **Bulk SysEx librarian** — Save/restore complete DX7 voice banks from the GUI

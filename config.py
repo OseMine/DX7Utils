@@ -7,9 +7,8 @@ import time
 import sys
 import threading
 import rtmidi
+from dx7utils.common import debug_print
 
-def debug_print(message):
-    print(f"[DEBUG] {message}")
 
 class ConfigApp:
     def __init__(self, master):
@@ -112,13 +111,12 @@ class ConfigApp:
                     self.midi_in.close_port()
                 self.midi_in.open_port(port_index)
                 debug_print(f"MIDI-Überwachung gestartet für Port: {self.midi_in_port.get()}")
-                # Cache channel value (Tkinter IntVar is not thread-safe)
                 channel = self.midi_channel.get() - 1
                 while not self.stop_midi_monitor.is_set():
                     msg = self.midi_in.get_message()
                     if msg:
                         message, delta_time = msg
-                        if message[0] & 0xF0 in [0x80, 0x90]:  # Note On oder Note Off
+                        if message[0] & 0xF0 in [0x80, 0x90]:
                             if message[0] & 0x0F == channel:
                                 debug_print(f"MIDI-Eingang: {message}")
                     time.sleep(0.001)
@@ -132,28 +130,27 @@ class ConfigApp:
         debug_print("Starte MIDI-Test")
         debug_print(f"Verfügbare MIDI-Eingangsports: {mido.get_input_names()}")
         debug_print(f"Verfügbare MIDI-Ausgangsports: {mido.get_output_names()}")
-        
-        # Monitor-Thread stoppen, damit er nicht gleichzeitig auf self.midi_in zugreift
+
         self.stop_midi_monitor_if_running()
-        
+
         try:
             output_port = self.midi_out_port.get()
             input_port = self.midi_in_port.get()
-            
+
             if input_port not in mido.get_input_names():
                 raise ValueError(f"Der ausgewählte MIDI-Eingangsport '{input_port}' ist nicht verfügbar.")
             if output_port not in mido.get_output_names():
                 raise ValueError(f"Der ausgewählte MIDI-Ausgangsport '{output_port}' ist nicht verfügbar.")
-            
+
             debug_print(f"Versuche, MIDI-Ausgangsport zu öffnen: {output_port}")
             with mido.open_output(output_port) as outport:
                 debug_print(f"MIDI-Ausgangsport erfolgreich geöffnet: {output_port}")
-                
+
                 debug_print(f"Versuche, MIDI-Eingangsport zu öffnen: {input_port}")
                 try:
                     if self.midi_in.is_port_open():
                         self.midi_in.close_port()
-                    
+
                     available_ports = self.midi_in.get_ports()
                     if input_port in available_ports:
                         port_index = available_ports.index(input_port)
@@ -161,28 +158,26 @@ class ConfigApp:
                         debug_print(f"MIDI-Eingangsport erfolgreich geöffnet: {input_port}")
                     else:
                         raise ValueError(f"MIDI-Eingangsport '{input_port}' nicht gefunden.")
-                    
-                    channel = self.midi_channel.get() - 1  # MIDI-Kanäle sind 0-basiert
+
+                    channel = self.midi_channel.get() - 1
                     note_on = mido.Message('note_on', note=69, velocity=64, channel=channel)
                     outport.send(note_on)
                     debug_print(f"Gesendet: {note_on}")
-                    
-                    # Start listening for responses immediately
+
                     start_time = time.time()
                     response_received = False
-                    while time.time() - start_time < 2:  # 2 Sekunden Timeout
+                    while time.time() - start_time < 2:
                         msg = self.midi_in.get_message()
                         if msg:
                             message, delta_time = msg
                             debug_print(f"Empfangen: {message}")
-                            if message[0] & 0xF0 in [0x90, 0x80]:  # Note On oder Note Off
+                            if message[0] & 0xF0 in [0x90, 0x80]:
                                 self.save_config()
                                 response_received = True
                                 debug_print("MIDI-Verbindung erfolgreich getestet und Konfiguration gespeichert")
                                 messagebox.showinfo("Erfolg", "MIDI-Verbindung getestet und Konfiguration gespeichert!")
                                 break
-                    
-                    # Send note off after the test
+
                     note_off = mido.Message('note_off', note=69, velocity=64, channel=channel)
                     outport.send(note_off)
                     debug_print(f"Gesendet: {note_off}")
@@ -190,7 +185,7 @@ class ConfigApp:
                     if not response_received:
                         debug_print("Keine Antwort vom MIDI-Gerät erhalten")
                         messagebox.showerror("Fehler", "Keine Antwort vom MIDI-Gerät erhalten.")
-                    
+
                     self.midi_in.close_port()
                 except rtmidi.RtMidiError as e:
                     debug_print(f"Fehler beim Öffnen des MIDI-Eingangsports: {str(e)}")
@@ -205,14 +200,36 @@ class ConfigApp:
             debug_print(f"Allgemeiner Fehler: {str(e)}")
             messagebox.showerror("Fehler", f"Unerwarteter Fehler beim MIDI-Test: {str(e)}")
         finally:
-            # Monitor bei erfolgreicher Verbindung wieder starten
             if self.midi_in_port.get() and self.midi_in_port.get() in mido.get_input_names():
                 self.start_midi_monitor()
 
+    def validate_paths(self):
+        errors = []
+        cartridge = self.cartridge_path.get().strip()
+        dexed = self.dexed_path.get().strip()
+
+        if not cartridge:
+            errors.append("Cartridge Ordner darf nicht leer sein.")
+        elif not os.path.isdir(cartridge):
+            errors.append(f"Cartridge Ordner existiert nicht: {cartridge}")
+
+        if not dexed:
+            errors.append("Dexed Pfad darf nicht leer sein.")
+        elif not os.path.isfile(dexed):
+            errors.append(f"Dexed Datei existiert nicht: {dexed}")
+
+        return errors
+
     def save_config(self):
+        path_errors = self.validate_paths()
+        if path_errors:
+            debug_print(f"Pfad-Fehler: {path_errors}")
+            messagebox.showerror("Pfad-Fehler", "\n".join(path_errors))
+            return
+
         config = {
-            "directory": self.cartridge_path.get(),
-            "dexed_path": self.dexed_path.get(),
+            "directory": self.cartridge_path.get().strip(),
+            "dexed_path": self.dexed_path.get().strip(),
             "midi_output_port": self.midi_out_port.get(),
             "midi_input_port": self.midi_in_port.get(),
             "midi_channel": self.midi_channel.get()
