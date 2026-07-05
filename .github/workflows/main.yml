@@ -19,6 +19,7 @@ jobs:
       - name: Convert Python to C
         run: |
           mkdir -p build/linux
+          cython --embed main.py -o build/linux/main.c
           for file in src/*.py; do
             cython --embed "$file" -o "build/linux/$(basename ${file%.py}).c"
           done
@@ -27,6 +28,11 @@ jobs:
           for file in build/linux/*.c; do
             gcc "$file" -o "${file%.c}" $(python3-config --cflags --ldflags --embed)
           done
+      - name: Copy runtime sources
+        run: |
+          cp -r src build/linux/
+          cp -r dx7utils build/linux/
+          cp -r data build/linux/ 2>/dev/null || true
       - uses: actions/upload-artifact@v4
         with:
           name: linux-binaries
@@ -44,6 +50,7 @@ jobs:
       - name: Convert Python to C
         run: |
           mkdir -p build/macos
+          cython --embed main.py -o build/macos/main.c
           for file in src/*.py; do
             cython --embed "$file" -o "build/macos/$(basename ${file%.py}).c"
           done
@@ -52,6 +59,11 @@ jobs:
           for file in build/macos/*.c; do
             gcc "$file" -o "${file%.c}" $(python3-config --cflags --ldflags --embed)
           done
+      - name: Copy runtime sources
+        run: |
+          cp -r src build/macos/
+          cp -r dx7utils build/macos/
+          cp -r data build/macos/ 2>/dev/null || true
       - uses: actions/upload-artifact@v4
         with:
           name: macos-binaries
@@ -72,6 +84,7 @@ jobs:
         shell: pwsh
         run: |
           mkdir -p build/windows
+          cython --embed main.py -o "build/windows/main.c"
           Get-ChildItem -Path "src/*.py" | ForEach-Object {
             cython --embed $_.FullName -o "build/windows/$($_.BaseName).c"
           }
@@ -115,6 +128,12 @@ jobs:
             gcc $_.FullName $wrapperObj -o "$($_.DirectoryName)\$($_.BaseName).exe" `
               -I "$inc" -L "$libsDir" "-l:$lib"
           }
+      - name: Copy runtime sources
+        shell: pwsh
+        run: |
+          Copy-Item -Recurse -Path "src" -Destination "build/windows/"
+          Copy-Item -Recurse -Path "dx7utils" -Destination "build/windows/"
+          if (Test-Path "data") { Copy-Item -Recurse -Path "data" -Destination "build/windows/" }
       - uses: actions/upload-artifact@v4
         with:
           name: windows-binaries
