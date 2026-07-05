@@ -16,28 +16,28 @@ def clear_console_line():
 
 def load_config():
     try:
-        with open('config.json', 'r') as f:
+        with open('data/config.json', 'r') as f:
             config = json.load(f)
         debug_print(f"Konfiguration geladen: {config}")
         return config['directory'], config['dexed_path']
     except FileNotFoundError:
-        print("config.json nicht gefunden.")
+        print("data/config.json nicht gefunden.")
         sys.exit(1)
     except KeyError:
-        print("Pfad im config.json fehlt.")
+        print("Pfad in data/config.json fehlt.")
         sys.exit(1)
 
 
 def load_config_simple():
     try:
-        with open('config.json', 'r') as f:
+        with open('data/config.json', 'r') as f:
             config = json.load(f)
         return config['directory']
     except FileNotFoundError:
-        print("config.json nicht gefunden.")
+        print("data/config.json nicht gefunden.")
         sys.exit(1)
     except KeyError:
-        print("Pfad im config.json fehlt.")
+        print("Pfad in data/config.json fehlt.")
         sys.exit(1)
 
 

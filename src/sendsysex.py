@@ -9,16 +9,16 @@ from dx7utils.common import debug_print
 
 def load_midi_output_port():
     try:
-        with open('config.json', 'r') as f:
+        with open('data/config.json', 'r') as f:
             config = json.load(f)
     except FileNotFoundError:
-        raise FileNotFoundError("config.json nicht gefunden.")
+        raise FileNotFoundError("data/config.json nicht gefunden.")
     except json.JSONDecodeError as e:
-        raise ValueError(f"config.json ist ungültig: {e}")
+        raise ValueError(f"data/config.json ist ungültig: {e}")
 
     midi_port_prefix = config.get('midi_output_port')
     if not midi_port_prefix:
-        raise KeyError("MIDI-Ausgangsport in config.json fehlt oder ist leer.")
+        raise KeyError("MIDI-Ausgangsport in data/config.json fehlt oder ist leer.")
     debug_print(f"MIDI-Ausgangsport-Präfix aus der Konfiguration: {midi_port_prefix}")
 
     available_ports = mido.get_output_names()

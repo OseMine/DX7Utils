@@ -41,13 +41,13 @@ class ConfigApp:
         }
 
         try:
-            with open('config.json', 'r') as f:
+            with open('data/config.json', 'r') as f:
                 stored_config = json.load(f)
             self.config = {**default_config, **stored_config}
-            debug_print(f"Werte aus config.json geladen und mit Standardwerten ergänzt: {self.config}")
+            debug_print(f"Werte aus data/config.json geladen und mit Standardwerten ergänzt: {self.config}")
         except FileNotFoundError:
             self.config = default_config
-            debug_print(f"config.json nicht gefunden, verwende Standardwerte: {self.config}")
+            debug_print(f"data/config.json nicht gefunden, verwende Standardwerte: {self.config}")
 
     def create_widgets(self):
         ttk.Label(self.master, text="Cartridge Ordner:").grid(row=0, column=0, sticky="w", padx=5, pady=5)
@@ -236,7 +236,8 @@ class ConfigApp:
             "midi_input_port": self.midi_in_port.get(),
             "midi_channel": self.midi_channel.get()
         }
-        with open('config.json', 'w') as f:
+        os.makedirs('data', exist_ok=True)
+        with open('data/config.json', 'w') as f:
             json.dump(config, f, indent=2)
         debug_print(f"Konfiguration gespeichert: {config}")
 

@@ -1,3 +1,4 @@
+import os
 import json
 import mido
 from dx7utils.common import debug_print, clear_console_line
@@ -7,7 +8,7 @@ fader_values = {f'program_{i}': {'fader_value': 0, 'cc_value': 0} for i in range
 current_program = None
 
 
-def load_from_json(file_name='fader_values.json'):
+def load_from_json(file_name='data/fader_values.json'):
     try:
         with open(file_name, 'r') as file:
             data = json.load(file)
@@ -25,9 +26,10 @@ def load_from_json(file_name='fader_values.json'):
         print(f"Fehler beim Laden der Fader-Werte: {e}")
 
 
-def save_to_json(file_name='fader_values.json'):
+def save_to_json(file_name='data/fader_values.json'):
     debug_print("Speichere Fader-Werte in JSON-Datei")
     try:
+        os.makedirs(os.path.dirname(file_name), exist_ok=True)
         with open(file_name, 'w') as file:
             json.dump(fader_values, file, indent=4)
         print(f"\nDaten wurden in {file_name} gespeichert.")

@@ -25,7 +25,8 @@ class TestLoadMidiOutputPort:
             orig_dir = os.getcwd()
             try:
                 os.chdir(tmpdir)
-                with open('config.json', 'w') as f:
+                os.makedirs('data', exist_ok=True)
+                with open('data/config.json', 'w') as f:
                     f.write('not json')
                 with pytest.raises(ValueError):
                     load_midi_output_port()
@@ -37,8 +38,9 @@ class TestLoadMidiOutputPort:
             orig_dir = os.getcwd()
             try:
                 os.chdir(tmpdir)
+                os.makedirs('data', exist_ok=True)
                 config = {"wrong_key": "value"}
-                with open('config.json', 'w') as f:
+                with open('data/config.json', 'w') as f:
                     json.dump(config, f)
                 with pytest.raises(KeyError):
                     load_midi_output_port()

@@ -33,8 +33,8 @@ coverage.xml
 htmlcov/
 
 # Project config (user-specific, contains local paths)
-config.json
-fader_values.json
+data/config.json
+data/fader_values.json
 
 # OS files
 Thumbs.db

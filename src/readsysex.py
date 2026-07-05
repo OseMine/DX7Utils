@@ -7,7 +7,7 @@ from dx7utils.common import debug_print, find_sysex_files, identify_instrument
 from dx7utils.sysex import extract_patch_names, format_name
 
 def main():
-    with open('config.json', 'r') as config_file:
+    with open('data/config.json', 'r') as config_file:
         config = json.load(config_file)
 
     directory = config['directory']
