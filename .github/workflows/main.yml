@@ -81,11 +81,20 @@ jobs:
           $prefix = python -c "import sys; print(sys.prefix)"
           $inc = "$prefix/include"
           $libsDir = "$prefix/libs"
-          $lib = (Get-ChildItem "$libsDir/python*.lib" | Select-Object -First 1).Name
+          $pyVer = python -c "import sys; print(f'{sys.version_info.major}{sys.version_info.minor}')"
+          $lib = "python$pyVer.lib"
+          if (-not (Test-Path "$libsDir/$lib")) {
+            $lib = (Get-ChildItem "$libsDir/python*.lib" | Sort-Object Name -Descending | Select-Object -First 1).Name
+          }
           Write-Host "Using Python import library: $lib in $libsDir"
+
+          $chocoGcc = "C:\ProgramData\chocolatey\lib\mingw\tools\install\mingw64\bin\gcc.exe"
+          if (Test-Path $chocoGcc) { $gcc = $chocoGcc } else { $gcc = "gcc" }
+          Write-Host "Using GCC: $gcc"
+
           Get-ChildItem -Path "build/windows/*.c" | ForEach-Object {
-            gcc $_.FullName -o "$($_.DirectoryName)\$($_.BaseName).exe" `
-              -I "$inc" -L "$libsDir" "-l:$lib" -mconsole
+            & $gcc $_.FullName -o "$($_.DirectoryName)\$($_.BaseName).exe" `
+              -I "$inc" -L "$libsDir" "-l:$lib" -mconsole -Wl,-subsystem,console
           }
       - uses: actions/upload-artifact@v4
         with:
