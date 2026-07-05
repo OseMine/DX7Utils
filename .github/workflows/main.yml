@@ -25,7 +25,7 @@ jobs:
       - name: Compile C files with GCC
         run: |
           for file in build/linux/*.c; do
-            gcc "$file" -o "build/linux/${file%.c}" $(python3-config --cflags --ldflags)
+            gcc "$file" -o "${file%.c}" $(python3-config --cflags --ldflags --embed)
           done
       - uses: actions/upload-artifact@v4
         with:
@@ -50,7 +50,7 @@ jobs:
       - name: Compile C files with GCC
         run: |
           for file in build/macos/*.c; do
-            gcc "$file" -o "build/macos/${file%.c}" $(python3-config --cflags --ldflags)
+            gcc "$file" -o "${file%.c}" $(python3-config --cflags --ldflags --embed)
           done
       - uses: actions/upload-artifact@v4
         with:
@@ -78,12 +78,12 @@ jobs:
       - name: Compile C files with GCC
         shell: pwsh
         run: |
-          $inc = python -c "import sysconfig; print(sysconfig.get_path('include'))"
-          $libs = python -c "import sysconfig; print(sysconfig.get_config_var('LIBDIR'))"
-          $ldflags = python -c "import sysconfig; print(sysconfig.get_config_var('LIBS'))"
+          $prefix = python -c "import sys; print(sys.prefix)"
+          $inc = "$prefix/include"
+          $libsDir = "$prefix/libs"
           Get-ChildItem -Path "build/windows/*.c" | ForEach-Object {
             gcc $_.FullName -o "$($_.DirectoryName)\$($_.BaseName).exe" `
-              -I "$inc" -L "$libs" $ldflags -lpython312
+              -I "$inc" -L "$libsDir" -l:python3.lib
           }
       - uses: actions/upload-artifact@v4
         with:
